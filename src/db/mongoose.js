@@ -1,9 +1,6 @@
 const mongoose = require('mongoose')
 // const validator = require("validator")
 
-//mongoatlas - Queen
-//mongoatlas - AUgAw7FOvXTBS5qj
-
 mongoose.connect(process.env.MONGOBD_URL)
 
 // const User = mongoose.model('User',{
