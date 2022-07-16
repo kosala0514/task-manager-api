@@ -1,7 +1,8 @@
 const mongoose = require('mongoose')
 const validator = require("validator")
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const Task = require('./task.model')
 
 const userSchema = new mongoose.Schema(
     {
@@ -79,17 +80,21 @@ userSchema.statics.findByCredentials = async (email, password) => {
 userSchema.methods.generateAuthToken = async function(){
     const user = this
     const token = jwt.sign({_id: user._id.toString()}, process.env.JWT_SECRET)
+    user.tokens = user.tokens.concat({ token })
+    await user.save()
+
     return token
 }
 
-userSchema.method.toJSON = function () {
+userSchema.methods.toJSON = function () {
     const user = this
-    const userObj = user.toObject()
-    delete userObj.password
-    delete userObj.token
-    delete userObj.avatar
+    const userObject = user.toObject()
 
-    return userObj
+    delete userObject.password
+    delete userObject.tokens
+    delete userObject.avatar
+
+    return userObject
 }
 
 userSchema.virtual('tasks',{

@@ -3,17 +3,18 @@ const router = new express.Router()
 const Task = require('../models/task.model')
 const auth = require('../middleware/auth')
 
-router.post('/task', async(req, res)=>{
+router.post('/tasks',auth, async(req, res)=>{
     // const task = new Task(req.body)
     const task = new Task({
         ...req.body,
-        owner:req.user._id
+        owner: req.user._id
     })
+
     try {
         await task.save()
         res.status(201).send(task)
     } catch (e) {
-        res.status(400).send(e.message)
+        res.status(400).send(e)
     }
     // task.save().then(()=>{
     //     res.status(201).send(task)
@@ -22,40 +23,36 @@ router.post('/task', async(req, res)=>{
     // })
 })
 
-router.get('/task',auth, async (req, res)=>{
+router.get('/tasks', auth, async (req, res) => {
     const match = {}
     const sort = {}
-    if(req.query.complete){
+
+    if (req.query.complete) {
         match.complete = req.query.complete === 'true'
     }
-    if(req.query.sortBy){
+
+    if (req.query.sortBy) {
         const parts = req.query.sortBy.split(':')
-        sort[parts[0]] = parts[1]=== 'desc' ? -1 : 1
+        sort[parts[0]] = parts[1] === 'desc' ? -1 : 1
     }
+
     try {
-        // const tasks = await Task.find({})
         await req.user.populate({
             path: 'tasks',
             match,
             options: {
-                limit:parseInt(req.query.limit), // displsy wennew limit eke wiidny
+                limit: parseInt(req.query.limit),
                 skip: parseInt(req.query.skip),
                 sort
             }
-        }).execPopulate()
-
+        })
         res.send(req.user.tasks)
     } catch (e) {
-        res.status(500).send(e.meddage)
+        res.status(500).send(e.message)
     }
-    // Task.find({}).then((tasks)=>{
-    //     res.send(tasks)
-    // }).catch((e)=>{
-    //     res.status(500).send(e.meddage) //db connection lost
-    // })
 })
 
-router.get('/task/:id',auth,  async(req, res)=>{
+router.get('/tasks/:id',auth,  async(req, res)=>{
     const _id =  req.params.id
 
     try {
@@ -78,8 +75,8 @@ router.get('/task/:id',auth,  async(req, res)=>{
     // })
 })
 
-router.patch('/task/:id',auth, async(req, res) => {
-    const updates = Obect.keys(req.body)
+router.patch('/tasks/:id',auth, async(req, res) => {
+    const updates = Object.keys(req.body)
     const allowupdates = ['description','complete']
     const isValidOperation = updates.every((update) => allowupdates.includes(update))
 

@@ -14,9 +14,9 @@ router.post('/users', async (req, res) =>{
         await user.save()
         sendWelcomeEmail(user.email, user.name)
         const token = await user.generateAuthToken()
-        return res.status(200).send({user, token})
+        res.status(201).send({user, token})
     } catch (e) {
-        return res.status(400).send(e.message)
+        res.status(400).send(e.message)
     }
     // user.save().then(()=>{
     //     res.send(user)
@@ -98,8 +98,8 @@ router.get('/users/me',auth, async (req, res)=>{
     // })
 })
 
-router.patch('/user/me',auth,  async (req, res) =>{
-    const updates = Obect.keys(req.body)
+router.patch('/users/me',auth,  async (req, res) =>{
+    const updates = Object.keys(req.body)
     const updateAllow = [ 'name', 'email', 'password','age']
     const isValidOperation = updates.every((update)=> updateAllow.includes(update))
     if (!isValidOperation){
@@ -108,7 +108,7 @@ router.patch('/user/me',auth,  async (req, res) =>{
     try {
         updates.forEach((update) => req.user[update] = req.body[update])
         await req.user.save()
-        req.send(req.user)
+        res.send(req.user)
     } catch (e) {
         res.status(500).send(e.message)
     }
@@ -139,12 +139,12 @@ const upload = multer({
 
 router.post('/users/me/avatar', auth, upload.single('avatar'), async(req, res) => {
     // req.user.avatar = req.file.buffer   // store file as  it is. no change of file size
-    const buffer = await sharp(req.file.buffer).resize({ width : 250, height  :250}).png.toBuffer()
+    const buffer = await sharp(req.file.buffer).resize({ width : 250, height  :250}).png().toBuffer()
     req.user.avatar = buffer
     await req.user.save()
     res.send()
 },(error, req, res, next)=>{
-    res.status(400).send({error:error.message})
+    res.status(404).send({error:error.message})
 })
 
 router.delete('/users/me/avatar', auth, async (req, res)=>{
@@ -168,6 +168,8 @@ router.get('/users/:id/avatar', async (req, res) => {
     }
 })
 
+
+module.exports = router
 // router.patch('/user/:id', async (req, res) =>{
 //     const updates = Obect.keys(req.body)
 //     const updateAllow = [ 'name', 'email', 'password','age']
@@ -201,5 +203,3 @@ router.get('/users/:id/avatar', async (req, res) => {
 //         res.status(500).send(e.message)
 //     }
 // })
-
-module.exports = router
